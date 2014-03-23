@@ -18,6 +18,10 @@ from sqlalchemy.orm import (
 
 from zope.sqlalchemy import ZopeTransactionExtension
 
+from webhelpers.text import urlify
+from webhelpers.paginate import PageURL_WebOb, Page
+from webhelpers.date import time_ago_in_words
+
 DBSession = scoped_session(sessionmaker(extension=ZopeTransactionExtension()))
 Base = declarative_base()
 
@@ -37,3 +41,24 @@ class Post(Base):
     body = Column(UnicodeText, default=u'')
     created = Column(DateTime, default=datetime.datetime.utcnow)
     edited = Column(DateTime, default=datetime.datetime.utcnow)
+
+    @classmethod
+    def all(cls):
+        return DBSession.query(Post).order_by(sa.desc(Post.created))
+
+    @classmethod
+    def by_id(cls, id):
+        return DBSession.query(Post).filter(Post.id == id).first()
+
+    @property
+    def slug(self):
+        return urlify(self.title)
+
+    @property
+    def created_in_words(self):
+        return time_ago_in_words(self.created)
+
+    @classmethod
+    def get_paginator(cls, request, page=1):
+        page_url = PageURL_WebOb(request)
+        return Page(Post.all(), page, url=page_url, items_per_page=15)
