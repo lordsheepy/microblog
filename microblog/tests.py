@@ -3,31 +3,32 @@ import transaction
 
 from pyramid import testing
 
-from .models import DBSession
+from .models import DBSession, Post
 
 
-class TestMyView(unittest.TestCase):
+class TestViews(unittest.TestCase):
     def setUp(self):
         self.config = testing.setUp()
         from sqlalchemy import create_engine
         engine = create_engine('sqlite://')
         from .models import (
             Base,
-            MyModel,
+            User,
             )
         DBSession.configure(bind=engine)
         Base.metadata.create_all(engine)
         with transaction.manager:
-            model = MyModel(name='one', value=55)
-            DBSession.add(model)
+            admin = User(name=u'admin', password=u'admin')
+            post = Post(title=u'test', body=u'testbody')
+            DBSession.add(admin)
 
     def tearDown(self):
         DBSession.remove()
         testing.tearDown()
 
-    def test_it(self):
-        from .views import my_view
+    def test_index(self):
+        from .views import index_page
         request = testing.DummyRequest()
-        info = my_view(request)
-        self.assertEqual(info['one'].name, 'one')
-        self.assertEqual(info['project'], 'microblog')
+        info = index_page(request)
+        self.assertEqual(info['paginator'].first().title, u'test')
+        self.assertEqual(info['project'].first().body, u'testbody')

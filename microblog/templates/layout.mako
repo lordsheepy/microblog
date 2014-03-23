@@ -2,15 +2,15 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Pyramid Blogr</title>
+<title>Pyramid Microblog</title>
   <meta name="keywords" content="python web application" />
   <meta name="description" content="pyramid web application" />
-  <link rel="shortcut icon" href="${request.static_url('pyramid_blogr:static/favicon.ico')}" />
-  <link rel="stylesheet" href="${request.static_url('pyramid_blogr:static/pylons.css')}" type="text/css" media="screen" charset="utf-8" />
+  <link rel="shortcut icon" href="${request.static_url('microblog:static/favicon.ico')}" />
+  <link rel="stylesheet" href="${request.static_url('microblog:static/pylons.css')}" type="text/css" media="screen" charset="utf-8" />
   <link rel="stylesheet" href="http://static.pylonsproject.org/fonts/nobile/stylesheet.css" media="screen" />
   <link rel="stylesheet" href="http://static.pylonsproject.org/fonts/neuton/stylesheet.css" media="screen" />
   <!--[if lte IE 6]>
-  <link rel="stylesheet" href="${request.static_url('pyramid_blogr:static/ie6.css')}" type="text/css" media="screen" charset="utf-8" />
+  <link rel="stylesheet" href="${request.static_url('microblog:static/ie6.css')}" type="text/css" media="screen" charset="utf-8" />
   <![endif]-->
 </head>
 <body>
@@ -18,7 +18,7 @@
 <div id="wrap">
     <div id="top">
       <div class="top align-center">
-        <div><img src="${request.static_url('pyramid_blogr:static/pyramid.png')}" width="750" height="169" alt="pyramid"/></div>
+        <div><img src="${request.static_url('microblog:static/pyramid.png')}" width="750" height="169" alt="pyramid"/></div>
       </div>
     </div>
     <div id="middle">

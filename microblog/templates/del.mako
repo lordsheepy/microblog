@@ -1,5 +1,7 @@
 <%inherit file="microblog:templates/layout.mako"/>
 
+<form type="submit"
+
 <h1>${post.title}</h1>
 <hr/>
 <p>${post.body}</p>

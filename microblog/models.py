@@ -7,6 +7,7 @@ from sqlalchemy import (
     Unicode,
     UnicodeText,
     DateTime,
+    ForeignKey,
     )
 
 from sqlalchemy.ext.declarative import declarative_base
@@ -14,6 +15,8 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import (
     scoped_session,
     sessionmaker,
+    relationship,
+    backref,
     )
 
 from zope.sqlalchemy import ZopeTransactionExtension
@@ -21,6 +24,8 @@ from zope.sqlalchemy import ZopeTransactionExtension
 from webhelpers.text import urlify
 from webhelpers.paginate import PageURL_WebOb, Page
 from webhelpers.date import time_ago_in_words
+from pyramid.security import Allow
+
 
 DBSession = scoped_session(sessionmaker(extension=ZopeTransactionExtension()))
 Base = declarative_base()
@@ -30,13 +35,23 @@ class User(Base):
     __tablename__ = 'users'
     id = Column(Integer, primary_key=True)
     name = Column(Unicode(255), unique=True, nullable=False)
+    email = Column(Unicode(255), unique=True, nullable=False)
     password = Column(Unicode(255), nullable=False)
+    posts = relationship("Post", backref="users")
     last_logged = Column(DateTime, default=datetime.datetime.utcnow)
+
+    @classmethod
+    def by_name(cls, name):
+        return DBSession.query(User).filter(User.name == name).first()
+
+    def verify_password(self, password):
+        return self.password == password
 
 
 class Post(Base):
     __tablename__ = 'posts'
     id = Column(Integer, primary_key=True)
+    owner = Column(Integer, ForeignKey('users.name'))
     title = Column(Unicode(255), unique=True, nullable=False)
     body = Column(UnicodeText, default=u'')
     created = Column(DateTime, default=datetime.datetime.utcnow)
@@ -50,6 +65,10 @@ class Post(Base):
     def by_id(cls, id):
         return DBSession.query(Post).filter(Post.id == id).first()
 
+    @classmethod
+    def get_owner(cls, owner):
+        return DBSession.query(Post).filter(Post.owner == owner).all()
+
     @property
     def slug(self):
         return urlify(self.title)
@@ -57,6 +76,12 @@ class Post(Base):
     @property
     def created_in_words(self):
         return time_ago_in_words(self.created)
+
+    @property
+    def __acl__(self):
+        return [
+            (Allow, self.owner, 'edit'),
+        ]
 
     @classmethod
     def get_paginator(cls, request, page=1):
