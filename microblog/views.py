@@ -1,4 +1,4 @@
-from pyramid.response import Response
+import transaction
 from pyramid.view import view_config
 from pyramid.httpexceptions import HTTPNotFound, HTTPFound
 from pyramid.security import remember, forget, authenticated_userid
@@ -7,11 +7,14 @@ from pyramid.security import remember, forget, authenticated_userid
 from sqlalchemy.exc import DBAPIError
 
 from .forms import BlogCreateForm, BlogUpdateForm, CreateUser
+from pyramid_mailer import get_mailer
+from pyramid_mailer.message import Message
 
 from .models import (
     DBSession,
     User,
     Post,
+    TempUser,
     )
 
 
@@ -37,9 +40,9 @@ def blog_view(request):
 def blog_create(request):
     post = Post()
     form = BlogCreateForm(request.POST)
+    post.owner = authenticated_userid(request)
     if request.method == 'POST' and form.validate:
         form.populate_obj(post)
-        post.owner = authenticated_userid(request)
         DBSession.add(post)
         return HTTPFound(location=request.route_url('home'))
     return {'form': form, 'action': request.matchdict.get('action')}
@@ -61,15 +64,16 @@ def blog_update(request):
     return {'form': form, 'action': request.matchdict.get('action')}
 
 
-# @view_config(route_name='blog_action', match_param='action=del',
-#              renderer='microblog:templates/edit_blog.mako',
-#              permission='edit')
-# def blog_delete(request):
-#     id = int(request.params.get('id', -1))
-#     post = Post.by_id(id)
-#     if not post:
-#         return HTTPNotFound
-#     user = request.headers.get('user.name')
+@view_config(route_name='blog_action', match_param='action=del',
+             renderer='microblog:templates/edit_blog.mako',
+             permission='edit')
+def blog_delete(request):
+    id = int(request.params.get('id', -1))
+    post = Post.by_id(id)
+    if not post:
+        return HTTPNotFound
+    DBSession.delete(post)
+    return HTTPFound(location=request.route_url('home'))
 
 
 @view_config(route_name='auth', match_param='action=in', renderer='string',
@@ -92,10 +96,26 @@ def sign_in_out(request):
 @view_config(route_name='register',
              renderer='microblog:templates/register.mako')
 def register(request):
-    user = User()
+    user = TempUser()
     form = CreateUser(request.POST)
     if request.method == 'POST' and form.validate:
         form.populate_obj(user)
         DBSession.add(user)
+        body = """<b>Click the link below to confirm your registration!<br>
+    <a href="www.shrikelight.com/confirm/%s">Confirm</a></b>""" % user.verify
+        message = Message(subject="Your Pyramid Microblog Registration",
+                          sender="pyramid.microblog@gmail.com",
+                          recipients=[user.email],
+                          body=body)
+        mailer = get_mailer(request)
+        mailer.send_immediately(message)
         return HTTPFound(location=request.route_url('home'))
     return {'form': form}
+
+
+@view_config(route_name='confirm', renderer='string')
+def confirm(request):
+    verify = int(request.matchdict.get('verify', False))
+    tempuser = TempUser.by_verify(verify)
+    tempuser.upgrade()
+    return HTTPFound(location=request.route_url('home'))

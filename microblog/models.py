@@ -24,7 +24,8 @@ from zope.sqlalchemy import ZopeTransactionExtension
 from webhelpers.text import urlify
 from webhelpers.paginate import PageURL_WebOb, Page
 from webhelpers.date import time_ago_in_words
-from pyramid.security import Allow
+from pyramid.security import Allow, ALL_PERMISSIONS
+import random
 
 
 DBSession = scoped_session(sessionmaker(extension=ZopeTransactionExtension()))
@@ -48,6 +49,31 @@ class User(Base):
         return self.password == password
 
 
+class TempUser(Base):
+    __tablename__ = 'tempusers'
+    id = Column(Integer, primary_key=True)
+    name = Column(Unicode(255), unique=True, nullable=False)
+    email = Column(Unicode(255), unique=True, nullable=False)
+    password = Column(Unicode(255), nullable=False)
+    verify = Column(Integer, nullable=False)
+
+    def __init__(self):
+        self.verify = random.getrandbits(31) + (1 << 31)
+
+    @classmethod
+    def by_verify(cls, verify):
+        return DBSession.query(TempUser).filter(TempUser.verify == verify).first()
+
+    def upgrade(self):
+        user = User()
+        user.name = self.name
+        user.email = self.email
+        user.password = self.password
+        DBSession.add(user)
+        DBSession.delete(self)
+        return None
+
+
 class Post(Base):
     __tablename__ = 'posts'
     id = Column(Integer, primary_key=True)
@@ -56,6 +82,11 @@ class Post(Base):
     body = Column(UnicodeText, default=u'')
     created = Column(DateTime, default=datetime.datetime.utcnow)
     edited = Column(DateTime, default=datetime.datetime.utcnow)
+
+    def __init__(self):
+        import pdb; pdb.set_trace()
+        self.__acl__ = [(Allow, self.owner, 'edit'),
+                        (Allow, 'admin', ALL_PERMISSIONS)]
 
     @classmethod
     def all(cls):
