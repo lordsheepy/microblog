@@ -16,6 +16,8 @@ requires = [
     'waitress',
     'wtforms',
     'webhelpers',
+    'cryptacular',
+    'gunicorn',
     ]
 
 setup(name='microblog',
