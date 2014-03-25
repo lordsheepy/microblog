@@ -7,4 +7,5 @@ A microblog built in pyramid using the tutorial found here: http://pyramid-blogr
 
 Beyond the tuorial, I extended the blog for posts to have owners, and specify
 the only owners can edit and delete their posts(delete also added by me). I
-swapped sqlite for postgres, and incorporated password hashing.
+swapped sqlite for postgres. A user registration system is currently in place,
+but needs some robustness added.
