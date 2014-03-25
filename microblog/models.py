@@ -83,11 +83,6 @@ class Post(Base):
     created = Column(DateTime, default=datetime.datetime.utcnow)
     edited = Column(DateTime, default=datetime.datetime.utcnow)
 
-    def __init__(self):
-        import pdb; pdb.set_trace()
-        self.__acl__ = [(Allow, self.owner, 'edit'),
-                        (Allow, 'admin', ALL_PERMISSIONS)]
-
     @classmethod
     def all(cls):
         return DBSession.query(Post).order_by(sa.desc(Post.created))

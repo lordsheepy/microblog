@@ -34,26 +34,25 @@ def blog_view(request):
     return {'post': post}
 
 
-@view_config(route_name='blog_action', match_param='action=create',
+@view_config(route_name='blog_create', match_param='action=create',
              renderer='microblog:templates/edit_blog.mako',
              permission='create')
 def blog_create(request):
     post = Post()
     form = BlogCreateForm(request.POST)
-    post.owner = authenticated_userid(request)
     if request.method == 'POST' and form.validate:
         form.populate_obj(post)
+        post.owner = authenticated_userid(request)
         DBSession.add(post)
         return HTTPFound(location=request.route_url('home'))
     return {'form': form, 'action': request.matchdict.get('action')}
 
 
 @view_config(route_name='blog_action', match_param='action=edit',
-             renderer='microblog:templates/edit_blog.mako',
+             renderer='microblog:templates/edit.mako',
              permission='edit')
-def blog_update(request):
-    id = int(request.params.get('id', -1))
-    post = Post.by_id(id)
+def blog_update(context, request):
+    post = context
     if not post:
         return HTTPNotFound
     form = BlogUpdateForm(request.POST, post)
@@ -61,15 +60,15 @@ def blog_update(request):
         form.populate_obj(post)
         return HTTPFound(location=request.route_url('blog', id=post.id,
                                                     slug=post.slug))
-    return {'form': form, 'action': request.matchdict.get('action')}
+    return {'form': form, 'action': request.matchdict.get('action'),
+            'id': post.id}
 
 
 @view_config(route_name='blog_action', match_param='action=del',
              renderer='microblog:templates/edit_blog.mako',
              permission='edit')
-def blog_delete(request):
-    id = int(request.params.get('id', -1))
-    post = Post.by_id(id)
+def blog_delete(context, request):
+    post = context
     if not post:
         return HTTPNotFound
     DBSession.delete(post)
@@ -101,8 +100,8 @@ def register(request):
     if request.method == 'POST' and form.validate:
         form.populate_obj(user)
         DBSession.add(user)
-        body = """<b>Click the link below to confirm your registration!<br>
-    <a href="www.shrikelight.com/confirm/%s">Confirm</a></b>""" % user.verify
+        body = """Click this link to confirm your registration:
+    www.shrikelight.com/confirm/%s""" % user.verify
         message = Message(subject="Your Pyramid Microblog Registration",
                           sender="pyramid.microblog@gmail.com",
                           recipients=[user.email],

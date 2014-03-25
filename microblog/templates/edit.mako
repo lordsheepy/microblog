@@ -1,6 +1,6 @@
 <%inherit file="microblog:templates/layout.mako"/>
 
-<form action="${request.route_url('blog_create',action=action)}" method="post">
+<form action="${request.route_url('blog_action',action=action, id=id)}" method="post">
 
 % for error in form.title.errors:
     <div class="error">${ error }</div>

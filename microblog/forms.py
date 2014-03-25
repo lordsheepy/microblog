@@ -1,5 +1,4 @@
 from wtforms import Form, TextField, TextAreaField, PasswordField, validators
-from wtforms import HiddenField
 
 strip_filter = lambda x: x.strip() if x else None
 
@@ -9,11 +8,11 @@ class BlogCreateForm(Form):
                       filters=[strip_filter])
     body = TextAreaField('Entry body', [validators.Length(min=1)],
                          filters=[strip_filter])
-    owner = HiddenField()
 
 
 class BlogUpdateForm(BlogCreateForm):
-    id = HiddenField()
+    # id = HiddenField()
+    pass
 
 
 class CreateUser(Form):

@@ -39,5 +39,5 @@ user_id = authenticated_userid(request)
 
 %endif
 
-<p><a href="${request.route_url('blog_action',action='create')}">
+<p><a href="${request.route_url('blog_create',action='create')}">
 Create a new blog entry</a></p>

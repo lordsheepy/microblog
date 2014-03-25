@@ -1,7 +1,7 @@
 from pyramid.config import Configurator
 from pyramid.authentication import AuthTktAuthenticationPolicy
 from pyramid.authorization import ACLAuthorizationPolicy
-from .security import Root
+from .security import Root, PostFactory
 from sqlalchemy import engine_from_config
 
 from .models import (
@@ -27,7 +27,9 @@ def main(global_config, **settings):
     config.add_static_view('static', 'static', cache_max_age=3600)
     config.add_route('home', '/')
     config.add_route('blog', '/blog/{id:\d+}/{slug}')
-    config.add_route('blog_action', '/blog/{action}')
+    config.add_route('blog_action', '/blog/{action}/{id}', factory=PostFactory,
+                     traverse='/{id}')
+    config.add_route('blog_create', '/blog/{action}')
     config.add_route('auth', '/sign/{action}')
     config.add_route('register', '/register')
     config.add_route('confirm', '/confirm/{verify:\d+}')
